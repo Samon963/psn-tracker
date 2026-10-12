@@ -3,7 +3,6 @@ import time
 import cloudscraper
 from bs4 import BeautifulSoup
 
-# Telegram Config (GitHub Secrets से aayenge)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
@@ -35,32 +34,53 @@ def check_site(name, url):
     try:
         response = scraper.get(url, timeout=15)
         if response.status_code != 200:
-            print(f"[{name}] Status Code: {response.status_code}")
+            print(f"[{name}] Blocked or Status Code: {response.status_code}")
             return False
 
+        text = response.text.lower()
+
+        # Anti-bot / Cloudflare check
+        if "captcha" in text or "access denied" in text or "security check" in text:
+            print(f"[{name}] Hit anti-bot page, skipping.")
+            return False
+
+        # JioGames ke liye special handling (agar page par 'sold out' ya 'out of stock' hidden ya visible ho)
+        if name == "JioGames":
+            if "out of stock" in text or "sold out" in text or "currently unavailable" in text:
+                print(f"[JioGames] Verified: Actually Out of Stock.")
+                return False
+            # Agar 'pay ₹' dikh raha hai par saath me stock nahi hai, toh ye check lagayein
+            soup = BeautifulSoup(response.text, 'html.parser')
+            page_text = soup.get_text().lower()
+            if "pay ₹" in page_text and not ("out of stock" in page_text or "unavailable" in page_text):
+                # Additional safety: check if actual vouchers are disabled/sold out
+                print(f"[JioGames] 🔥 Real Stock Likely Available!")
+                return True
+            return False
+
+        # Baaki sites ke liye standard logic
         soup = BeautifulSoup(response.text, 'html.parser')
-        text = soup.get_text().lower()
+        page_text = soup.get_text().lower()
 
-        out_of_stock_phrases = [
-            "out of stock", "currently unavailable", "sold out", 
-            "coming soon", "temporarily unavailable", "item not available"
-        ]
+        positive_keywords = ["add to cart", "buy now", "proceed to buy", "pay ₹"]
+        negative_keywords = ["out of stock", "currently unavailable", "sold out", "coming soon", "temporarily unavailable"]
 
-        is_out = any(phrase in text for phrase in out_of_stock_phrases)
+        has_positive = any(keyword in page_text for keyword in positive_keywords)
+        has_negative = any(keyword in page_text for keyword in negative_keywords)
 
-        if is_out:
-            print(f"[{name}] Currently Out of Stock.")
-            return False
-        else:
-            print(f"[{name}] 🔥 Stock Detected / Available!")
+        if has_positive and not has_negative:
+            print(f"[{name}] 🔥 Real Stock Detected!")
             return True
+        else:
+            print(f"[{name}] Out of stock.")
+            return False
 
     except Exception as e:
         print(f"[{name}] Error checking page: {e}")
         return False
 
 def main():
-    print("🚀 PSN Stock Checker Active...")
+    print("🚀 Advanced PSN Stock Checker Active...")
     alerts = []
 
     for platform, url in TARGET_URLS.items():
@@ -74,4 +94,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-              
+    
