@@ -9,7 +9,7 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 TARGET_URLS = {
     "GyFTR": "https://www.gyftr.com/sony-playstation",
     "JioGames": "https://store.jiogames.com/products/?brand=playstation",
-    "Amazon": "https://www.amazon.in/dp/B08L5WH137", 
+    "Amazon": "https://amzn.in/d/0fgC6jpo", 
     "Flipkart": "https://www.flipkart.com/search?q=psn+gift+card&sid=mcd%2Czyx%2Czzo&as=on&as-show=on&as-pos=1&as-type=RECENT&as-searchtext=psn&requestId=51db7ba4-2972-4a62-8bad-4a933cad7d76&suggestionId=psn+gift+card%7CDigital+Voucher+Code&otracker=AS_QueryStore_OrganicAutoSuggest_%7BPOSITION%7D_3_na_na_na&isSearchQuery=true"
 }
 
@@ -43,6 +43,17 @@ def check_site(name, url):
             print(f"[{name}] Hit anti-bot page, skipping.")
             return False
 
+        # GyFTR ke liye strict check taaki false alert na aaye
+        if name == "GyFTR":
+            if "product not found" in text or "we are sold out" in text or "sold out" in text or "out of stock" in text:
+                print(f"[GyFTR] Confirmed Out of Stock via strict check.")
+                return False
+            # Agar actual buy option ho tabhi true maane
+            if "buy now" in text or "add to cart" in text:
+                print(f"[GyFTR] 🔥 Real Stock Detected!")
+                return True
+            return False
+
         # JioGames specific validation
         if name == "JioGames":
             if "out of stock" in text or "sold out" in text or "currently unavailable" in text:
@@ -53,13 +64,12 @@ def check_site(name, url):
                 return True
             return False
 
-        # Standard platforms logic (Flipkart, Amazon, GyFTR)
+        # Standard platforms logic (Amazon, Flipkart)
         soup = BeautifulSoup(response.text, 'html.parser')
         page_text = soup.get_text().lower()
 
         positive_keywords = ["add to cart", "buy now", "proceed to buy", "pay ₹"]
         
-        # Comprehensive negative keywords based on actual UI states
         negative_keywords = [
             "out of stock", "currently unavailable", "sold out", 
             "coming soon", "no results found", "product not found", 
@@ -100,4 +110,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-            
+        
