@@ -43,18 +43,15 @@ def check_site(name, url):
             print(f"[{name}] Hit anti-bot page, skipping.")
             return False
 
-        # GyFTR ke liye strict check taaki false alert na aaye
         if name == "GyFTR":
-            if "product not found" in text or "we are sold out" in text or "sold out" in text or "out of stock" in text:
-                print(f"[GyFTR] Confirmed Out of Stock via strict check.")
+            if "sold out" in text or "product not found" in text or "out of stock" in text or "we are sold out" in text:
+                print(f"[GyFTR] Confirmed Out of Stock.")
                 return False
-            # Agar actual buy option ho tabhi true maane
-            if "buy now" in text or "add to cart" in text:
-                print(f"[GyFTR] 🔥 Real Stock Detected!")
+            if ("₹" in text or "rs." in text) and ("buy now" in text or "add to cart" in text or "select denomination" in text):
+                print(f"[GyFTR] 🔥 Real Stock & Denominations Detected!")
                 return True
             return False
 
-        # JioGames specific validation
         if name == "JioGames":
             if "out of stock" in text or "sold out" in text or "currently unavailable" in text:
                 print(f"[JioGames] Out of stock confirmed.")
@@ -64,12 +61,10 @@ def check_site(name, url):
                 return True
             return False
 
-        # Standard platforms logic (Amazon, Flipkart)
         soup = BeautifulSoup(response.text, 'html.parser')
         page_text = soup.get_text().lower()
 
         positive_keywords = ["add to cart", "buy now", "proceed to buy", "pay ₹"]
-        
         negative_keywords = [
             "out of stock", "currently unavailable", "sold out", 
             "coming soon", "no results found", "product not found", 
@@ -96,7 +91,7 @@ def check_site(name, url):
         return False
 
 def main():
-    print("🚀 Ultimate PSN Stock Checker Active...")
+    print("🚀 Foolproof PSN Stock Checker Active...")
     alerts = []
 
     for platform, url in TARGET_URLS.items():
@@ -110,4 +105,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-        
+    
