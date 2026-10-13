@@ -43,6 +43,7 @@ def check_site(name, url):
             print(f"[{name}] Hit anti-bot page, skipping.")
             return False
 
+        # GyFTR specific validation
         if name == "GyFTR":
             if "sold out" in text or "product not found" in text or "out of stock" in text or "we are sold out" in text:
                 print(f"[GyFTR] Confirmed Out of Stock.")
@@ -52,15 +53,17 @@ def check_site(name, url):
                 return True
             return False
 
+        # JioGames specific validation (Updated with "No Products Found" check)
         if name == "JioGames":
-            if "out of stock" in text or "sold out" in text or "currently unavailable" in text:
-                print(f"[JioGames] Out of stock confirmed.")
+            if "out of stock" in text or "sold out" in text or "currently unavailable" in text or "no products found" in text or "we couldn't find the product" in text:
+                print(f"[JioGames] Out of stock or products unlisted confirmed.")
                 return False
             if "pay ₹" in text or "select vouchers" in text:
                 print(f"[JioGames] 🔥 Active Page & Stock Options Detected!")
                 return True
             return False
 
+        # Amazon & Flipkart logic
         soup = BeautifulSoup(response.text, 'html.parser')
         page_text = soup.get_text().lower()
 
