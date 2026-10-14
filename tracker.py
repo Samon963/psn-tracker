@@ -53,15 +53,17 @@ def check_site(name, url):
                 return True
             return False
 
-        # JioGames specific validation (Updated with "No Products Found" check)
+        # JioGames inverted logic: Jab tak "No Products Found" hai, tab tak Out of Stock. Jaise hi hatega, alert bhej do!
         if name == "JioGames":
-            if "out of stock" in text or "sold out" in text or "currently unavailable" in text or "no products found" in text or "we couldn't find the product" in text:
-                print(f"[JioGames] Out of stock or products unlisted confirmed.")
+            out_of_stock_phrases = ["no products found", "we couldn't find the product", "explore alternatives"]
+            is_out_of_stock = any(phrase in text for phrase in out_of_stock_phrases)
+            
+            if is_out_of_stock:
+                print(f"[JioGames] Out of stock ('No Products Found' banner is active).")
                 return False
-            if "pay ₹" in text or "select vouchers" in text:
-                print(f"[JioGames] 🔥 Active Page & Stock Options Detected!")
+            else:
+                print(f"[JioGames] 🔥 'No Products Found' banner is GONE! Restock Detected!")
                 return True
-            return False
 
         # Amazon & Flipkart logic
         soup = BeautifulSoup(response.text, 'html.parser')
